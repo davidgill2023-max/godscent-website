@@ -636,7 +636,7 @@ if (selectedPayment === "Cash App") {
                 <form onSubmit={handleCheckout} className="space-y-6 lg:sticky lg:top-24">
                   <p className="text-xs tracking-luxury uppercase text-muted-foreground mb-2">-- Checkout</p>
                   <div className="space-y-4">
-                    <p className="text-xs tracking-luxury uppercase text-muted-foreground">Contact</p>
+                    <p className="text-xs tracking-luxury uppercase text-muted-foreground">Email</p>
                     <Input required name="email" type="email" placeholder="Email for receipt" className="rounded-none border-0 border-b border-border bg-transparent focus-visible:ring-0 focus-visible:border-amber px-0 h-12 text-base" />
                   </div>
                   <div className="space-y-4">
@@ -680,6 +680,7 @@ if (selectedPayment === "Cash App") {
                     <div className="bg-secondary/40 border border-amber/20 p-5 space-y-2">
                       <p className="text-xs tracking-luxury uppercase text-muted-foreground">Zelle Instructions</p>
                       <p className="font-serif text-base">Send <span className="text-amber-deep font-semibold">${cartTotal}</span> to <span className="font-semibold">VaShawn Marshall</span> via Zelle.</p>
+                      <p className="text-xs text-muted-foreground">Phone: (202) 246-4685</p>
                       <p className="text-xs text-muted-foreground">After clicking checkout, you will upload a screenshot of your completed Zelle payment as proof. Your order is confirmed once we verify it.</p>
                     </div>
                   )}
