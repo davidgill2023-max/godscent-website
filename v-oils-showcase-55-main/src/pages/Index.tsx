@@ -549,8 +549,6 @@ if (selectedPayment === "Cash App") {
         </div>
       </section>
  
-  
- 
       {/* FOOTER */}
       <footer className="py-16 border-t border-border">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 grid md:grid-cols-3 gap-12 items-start">
