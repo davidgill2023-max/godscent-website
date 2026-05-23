@@ -434,16 +434,18 @@ if (selectedPayment === "Cash App") {
       {/* COLLECTION */}
       <section id="collection" className="py-32 lg:py-40">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid lg:grid-cols-12 gap-8 mb-20">
             <div className="lg:col-span-4"><p className="text-xs tracking-luxury uppercase text-stone-700 mb-6">-- The Collection</p></div>
             <div className="lg:col-span-8">
               <h2 className="font-serif text-5xl md:text-6xl lg:text-7xl leading-[1.05] text-balance">
                 Newly featured. <em className="italic text-amber-deep">Each</em> a daily essential, bottled with intention.
               </h2>
             </div>
+
+             {/* PRODUCT GRID */}
           </div>
-          <div className="grid md:grid-cols-2 gap-x-12 gap-y-20">
-            {products.map((p) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {products.map((p) => (
               <article key={p.no} className="group transition-transform duration-500 hover:-translate-y-1">
                 <div className="relative overflow-hidden bg-secondary/50 aspect-[4/5] mb-6">
 <img
@@ -565,26 +567,23 @@ if (selectedPayment === "Cash App") {
             <h2 className="font-serif text-5xl md:text-6xl leading-[1.05] mb-8 text-balance">Say <em className="italic text-amber-deep">hello.</em></h2>
                         <p className="text-stone-700 leading-relaxed mb-6">Questions about the collection, a custom order, or just want to write? We read every note.</p>
             <p className="font-serif text-lg">godscentoils99@gmail.com</p>
-          </div>
-          <div
-            className="flex justify-center md:justify-end"
-            style={{ marginTop: "6rem" }}
-          >
-            <Button
-              size="lg"
-              variant="outline"
-              className="px-8 py-6 text-base"
-              onClick={() => {
-                window.open(
-                  "mailto:godscentoils99@gmail.com",
-                  "_blank",
-                  "noopener,noreferrer"
-                );
-              }}
-            >
-              Send Message
-            </Button>
-          </div>
+           </div>
+ <div
+  className="flex justify-center md:justify-end"
+  style={{ marginTop: "6rem" }}
+>
+  <Button
+    size="lg"
+    variant="outline"
+    className="px-8 py-6 text-base"
+    onClick={() => {
+      window.location.href =
+        "mailto:godscentoils99@gmail.com?subject=God%20Scent%20Inquiry";
+    }}
+  >
+    Send Message
+  </Button>
+</div>
         </div>
       </section>
  
@@ -715,6 +714,21 @@ if (selectedPayment === "Cash App") {
                           </button>
                         );
                       })}
+                      <div className="space-y-4">
+
+  <Button>
+    Pay with PayPal
+  </Button>
+
+  <Button>
+    Pay with Cash App
+  </Button>
+
+  <p className="text-xs text-stone-600 mt-3 text-center leading-relaxed">
+  Some browsers or ad blockers may prevent payment windows from opening automatically.
+</p>
+
+</div>
                     </div>
                   </div>
  
