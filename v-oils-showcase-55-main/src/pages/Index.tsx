@@ -434,7 +434,7 @@ if (selectedPayment === "Cash App") {
       {/* COLLECTION */}
       <section id="collection" className="py-32 lg:py-40">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
-          <div className="grid lg:grid-cols-12 gap-8 mb-20">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="lg:col-span-4"><p className="text-xs tracking-luxury uppercase text-stone-700 mb-6">-- The Collection</p></div>
             <div className="lg:col-span-8">
               <h2 className="font-serif text-5xl md:text-6xl lg:text-7xl leading-[1.05] text-balance">
