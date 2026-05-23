@@ -262,10 +262,11 @@ async function sendContactEmail(name: string, email: string, message: string) {
     setProcessing(false);
 
 if (selectedPayment === "PayPal") {
-  window.open(
-    `https://www.paypal.com/paypalme/VaShawnMarshall/${cartTotal}`,
-    "_blank"
-  );
+window.open(
+  `https://www.paypal.com/paypalme/VaShawnMarshall/${cartTotal}`,
+  "_blank",
+  "noopener,noreferrer"
+);
 
   setAwaitingPayment(true);
   setPaymentConfirmOpen(true);
@@ -274,10 +275,11 @@ if (selectedPayment === "PayPal") {
 }
 
 if (selectedPayment === "Cash App") {
-  window.open(
-    `https://cash.app/$GodscentOils/${cartTotal}`,
-    "_blank"
-  );
+ window.open(
+  `https://cash.app/$GodscentOils/${cartTotal}`,
+  "_blank",
+  "noopener,noreferrer"
+);
 
   setAwaitingPayment(true);
   setPaymentConfirmOpen(true);
@@ -538,15 +540,19 @@ if (selectedPayment === "Cash App") {
                         <p className="text-muted-foreground leading-relaxed mb-6">Questions about the collection, a custom order, or just want to write? We read every note.</p>
             <p className="font-serif text-lg">godscentoils99@gmail.com</p>
           </div>
-          <div className="flex justify-center md:justify-end" style={{ marginTop: '6rem' }}>
-            <Button 
-              onClick={() => window.open('https://mail.google.com/mail/?view=cm&fs=1&to=godscentoils99@gmail.com', '_blank')}
-              className="rounded-none bg-foreground text-background hover:bg-amber-deep h-12 px-10 text-xs tracking-luxury uppercase"
-            >
-              Send Message
-            </Button>
-          </div>
-        </div>
+        <div
+  className="flex justify-center md:justify-end"
+  style={{ marginTop: "6rem" }}
+>
+  <Button
+    onClick={() => {
+      window.location.href = "mailto:godscentoils99@gmail.com";
+    }}
+  >
+    Send Us A Message
+  </Button>
+</div>
+</div>
       </section>
  
       {/* FOOTER */}
