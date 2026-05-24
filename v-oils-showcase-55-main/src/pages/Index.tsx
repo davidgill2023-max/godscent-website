@@ -17,7 +17,7 @@ import review1 from "@/assets/review-1.jpg";
 import review2 from "@/assets/review-2.jpg";
 import review3 from "@/assets/review-3.jpg";
 import zelleQr from "@/assets/zelle-qr.jpg";
- 
+
 // Init EmailJS ONCE at module level
 emailjs.init(import.meta.env.VITE_EMAILJS_PUBLIC_KEY);
 
@@ -27,19 +27,13 @@ const CUSTOMER_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_CUSTOMER_TEMPLATE as s
 const CONTACT_TEMPLATE_ID  = import.meta.env.VITE_EMAILJS_CONTACT_TEMPLATE as string;
 const PUBLIC_KEY           = import.meta.env.VITE_EMAILJS_PUBLIC_KEY as string;
 
-console.log("📍 Environment Variables:");
-console.log("SERVICE_ID:", SERVICE_ID);
-console.log("PUBLIC_KEY:", PUBLIC_KEY);
-console.log("ADMIN_TEMPLATE_ID:", ADMIN_TEMPLATE_ID);
-console.log("CUSTOMER_TEMPLATE_ID:", CUSTOMER_TEMPLATE_ID);
- 
 const products = [
-  { no: "N 01", name: "Baccarat",     notes: "A bold crimson signature — saffron, ambergris, and smoked cedar wrapped in red velvet warmth.",    price: 25, image: oilBaccarat   },
-  { no: "N 02", name: "Oud",          notes: "Liquid gold — aged agarwood, honeyed amber, and a whisper of resin for nights that linger.",        price: 25, image: oilOud        },
-  { no: "N 03", name: "Bond",         notes: "Cool, composed, unmistakable — blue iris, sea salt, and crisp bergamot tied with a clean musk.",   price: 25, image: oilBond       },
-  { no: "N 04", name: "Dream Sickle", notes: "Sun-warmed peach, vanilla cream, and soft mandarin — a nostalgic, golden-hour daydream.",           price: 25, image: oilDreamsickle},
+  { no: "N 01", name: "Baccarat",     notes: "A bold crimson signature — saffron, ambergris, and smoked cedar wrapped in red velvet warmth.",   price: 25, image: oilBaccarat    },
+  { no: "N 02", name: "Oud",          notes: "Liquid gold — aged agarwood, honeyed amber, and a whisper of resin for nights that linger.",       price: 25, image: oilOud         },
+  { no: "N 03", name: "Bond",         notes: "Cool, composed, unmistakable — blue iris, sea salt, and crisp bergamot tied with a clean musk.",  price: 25, image: oilBond        },
+  { no: "N 04", name: "Dream Sickle", notes: "Sun-warmed peach, vanilla cream, and soft mandarin — a nostalgic, golden-hour daydream.",          price: 25, image: oilDreamsickle },
 ];
- 
+
 const PaymentIcons: Record<string, React.FC<{ active: boolean }>> = {
   "PayPal": ({ active }) => (
     <svg viewBox="0 0 60 32" fill="none" className="h-7 w-auto mx-auto">
@@ -59,9 +53,9 @@ const PaymentIcons: Record<string, React.FC<{ active: boolean }>> = {
   ),
 };
 const PAYMENT_METHODS = Object.keys(PaymentIcons);
- 
+
 type PolicyType = "terms" | "returns" | "privacy" | null;
- 
+
 const PolicyModal = ({ type, onClose }: { type: PolicyType; onClose: () => void }) => {
   if (!type) return null;
   const content: Record<NonNullable<PolicyType>, { title: string; body: React.ReactNode }> = {
@@ -123,10 +117,10 @@ const PolicyModal = ({ type, onClose }: { type: PolicyType; onClose: () => void 
     </div>
   );
 };
- 
+
 type CartItem = { name: string; price: number; qty: number; image: string };
 type OrderData = { customerEmail: string; customerName: string; address: string; city: string; zip: string; country: string; items: CartItem[]; total: number; paymentMethod: string; };
- 
+
 async function sendOrderEmails(orderData: OrderData) {
   const itemsList = orderData.items.map((i) => `${i.name} x${i.qty}  -  $${(i.price * i.qty).toFixed(2)}`).join("\n");
   const params = {
@@ -137,24 +131,10 @@ async function sendOrderEmails(orderData: OrderData) {
     payment_method: orderData.paymentMethod,
     address:        `${orderData.address}, ${orderData.city} ${orderData.zip}, ${orderData.country}`,
   };
-  console.log("📧 Sending admin email with params:", params);
-  console.log("📧 Using Service ID:", SERVICE_ID, "Template ID:", ADMIN_TEMPLATE_ID, "Public Key:", PUBLIC_KEY);
-  try {
-    await emailjs.send(SERVICE_ID, ADMIN_TEMPLATE_ID,    { ...params, to_email: "godscentoils99@gmail.com" }, PUBLIC_KEY);
-    console.log("✅ Admin email sent successfully");
-  } catch (err) {
-    console.error("❌ Admin email failed:", err);
-    throw err;
-  }
-  try {
-    await emailjs.send(SERVICE_ID, CUSTOMER_TEMPLATE_ID, { ...params, to_email: orderData.customerEmail },    PUBLIC_KEY);
-    console.log("✅ Customer email sent successfully");
-  } catch (err) {
-    console.error("❌ Customer email failed:", err);
-    throw err;
-  }
+  await emailjs.send(SERVICE_ID, ADMIN_TEMPLATE_ID,    { ...params, to_email: "godscentoils99@gmail.com" }, PUBLIC_KEY);
+  await emailjs.send(SERVICE_ID, CUSTOMER_TEMPLATE_ID, { ...params, to_email: orderData.customerEmail },    PUBLIC_KEY);
 }
- 
+
 async function sendContactEmail(name: string, email: string, message: string) {
   await emailjs.send(SERVICE_ID, CONTACT_TEMPLATE_ID, {
     from_name:  name,
@@ -163,29 +143,28 @@ async function sendContactEmail(name: string, email: string, message: string) {
     to_email:   "godscentoils99@gmail.com",
   }, PUBLIC_KEY);
 }
- 
-  const Index = () => {
-  const [emailInput, setEmailInput]           = useState("");
-  const [pendingOrder, setPendingOrder]       = useState<OrderData | null>(null);
-  const [cart, setCart]                       = useState<CartItem[]>([]);
-  const [cartOpen, setCartOpen]               = useState(false);
-  const [selectedPayment, setSelectedPayment] = useState<string>("PayPal");
-  const [policyModal, setPolicyModal]         = useState<PolicyType>(null);
-  const [agreements, setAgreements]           = useState({ terms: false, returns: false, privacy: false });
-  const [processing, setProcessing]           = useState(false);
-  const [zelleOpen, setZelleOpen]             = useState(false);
-  const [zelleStep, setZelleStep]             = useState<"instructions"|"upload"|"confirmed">("instructions");
-  const [zelleScreenshot, setZelleScreenshot] = useState<string | null>(null);
-  const [zelleRef, setZelleRef]               = useState("");
-  const zelleFileRef                          = useRef<HTMLInputElement>(null);
+
+const Index = () => {
+  const [emailInput, setEmailInput]                 = useState("");
+  const [pendingOrder, setPendingOrder]             = useState<OrderData | null>(null);
+  const [cart, setCart]                             = useState<CartItem[]>([]);
+  const [cartOpen, setCartOpen]                     = useState(false);
+  const [selectedPayment, setSelectedPayment]       = useState<string>("PayPal");
+  const [policyModal, setPolicyModal]               = useState<PolicyType>(null);
+  const [agreements, setAgreements]                 = useState({ terms: false, returns: false, privacy: false });
+  const [processing, setProcessing]                 = useState(false);
+  const [zelleOpen, setZelleOpen]                   = useState(false);
+  const [zelleStep, setZelleStep]                   = useState<"instructions" | "upload" | "confirmed">("instructions");
+  const [zelleScreenshot, setZelleScreenshot]       = useState<string | null>(null);
+  const [zelleRef, setZelleRef]                     = useState("");
+  const zelleFileRef                                = useRef<HTMLInputElement>(null);
   const [paymentConfirmOpen, setPaymentConfirmOpen] = useState(false);
-  const [awaitingPayment, setAwaitingPayment] = useState(false);
- 
+
   useEffect(() => {
     document.body.style.overflow = cartOpen ? "hidden" : "auto";
     return () => { document.body.style.overflow = "auto"; };
   }, [cartOpen]);
- 
+
   const addToCart = (p: typeof products[number]) => {
     setCart((prev) => {
       const existing = prev.find((i) => i.name === p.name);
@@ -195,32 +174,39 @@ async function sendContactEmail(name: string, email: string, message: string) {
     toast.success(`${p.name} added to cart`);
     setCartOpen(true);
   };
- 
+
   const updateQty = (name: string, delta: number) =>
     setCart((prev) => prev.map((i) => i.name === name ? { ...i, qty: i.qty + delta } : i).filter((i) => i.qty > 0));
- 
+
   const removeFromCart = (name: string) => setCart((prev) => prev.filter((i) => i.name !== name));
- 
+
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
   const cartTotal = cart.reduce((s, i) => s + i.qty * i.price, 0);
   const allAgreed = agreements.terms && agreements.returns && agreements.privacy;
- 
+
+  // ── Contact: sends via EmailJS AND opens Gmail in new tab ─────────────────────
   const handleContact = async (e: React.FormEvent) => {
     e.preventDefault();
     const form    = e.target as HTMLFormElement;
     const name    = (form.elements.namedItem("name")    as HTMLInputElement).value;
     const email   = (form.elements.namedItem("email")   as HTMLInputElement).value;
     const message = (form.elements.namedItem("message") as HTMLTextAreaElement).value;
+
+    // Open Gmail compose in a new tab
+    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=godscentoils99%40gmail.com&su=${encodeURIComponent("God Scent Inquiry from " + name)}&body=${encodeURIComponent(message + "\n\nReply to: " + email)}`;
+    window.open(gmailUrl, "_blank", "noopener,noreferrer");
+
+    // Also send via EmailJS so you get a notification regardless
     try {
       await sendContactEmail(name, email, message);
-      toast.success("Message received", { description: "We'll be in touch within two business days." });
-      form.reset();
-    } catch (err) {
-      console.error("Contact email error:", err);
-      toast.error("Couldn't send your message. Please email us directly at godscentoils99@gmail.com");
+    } catch {
+      // silent — Gmail tab already opened as primary delivery
     }
+
+    toast.success("Message sent!", { description: "Your Gmail compose window has opened. We will be in touch within two business days." });
+    form.reset();
   };
- 
+
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!emailInput) return;
@@ -233,94 +219,66 @@ async function sendContactEmail(name: string, email: string, message: string) {
     toast.success("Welcome to the atelier", { description: "We'll write when the next batch is ready." });
     setEmailInput("");
   };
- 
+
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     if (cart.length === 0) { toast.error("Your cart is empty."); return; }
     if (!allAgreed) { toast.error("Please agree to all policies before checking out."); return; }
- 
+
     const form = e.target as HTMLFormElement;
     const get  = (n: string) => (form.elements.namedItem(n) as HTMLInputElement)?.value ?? "";
- 
+
     const orderData: OrderData = {
       customerEmail: get("email"),   customerName: get("fullName"),
       address:       get("address"), city:         get("city"),
       zip:           get("zip"),     country:      get("country"),
       items: cart,   total: cartTotal, paymentMethod: selectedPayment,
     };
- 
+
     setPendingOrder(orderData);
     setProcessing(true);
- 
+
     if (selectedPayment === "Zelle") {
       setProcessing(false);
       setZelleStep("instructions");
       setZelleOpen(true);
       return;
     }
- 
+
     setProcessing(false);
 
-if (selectedPayment === "PayPal") {
-window.open(
-  `https://www.paypal.com/paypalme/VaShawnMarshall/${cartTotal}`,
-  "_blank",
-  "noopener,noreferrer"
-);
+    if (selectedPayment === "PayPal") {
+      // paypal.me/USERNAME is the correct deep-link format
+      window.open("https://paypal.me/VaShawnMarshall/" + cartTotal, "_blank", "noopener,noreferrer");
+      setPaymentConfirmOpen(true);
+      return;
+    }
 
-  setAwaitingPayment(true);
-  setPaymentConfirmOpen(true);
-
-  return;
-}
-
-if (selectedPayment === "Cash App") {
- window.open(
-  `https://cash.app/$GodscentOils/${cartTotal}`,
-  "_blank",
-  "noopener,noreferrer"
-);
-
-  setAwaitingPayment(true);
-  setPaymentConfirmOpen(true);
-
-  return;
-  }
+    if (selectedPayment === "Cash App") {
+      // Cash App deep link — $cashtag format; amount auto-fills on mobile
+      window.open("https://cash.app/$GodscentOils/" + cartTotal, "_blank", "noopener,noreferrer");
+      setPaymentConfirmOpen(true);
+      return;
+    }
   };
 
+  // Called when customer clicks "Payment Sent" after returning from PayPal/CashApp
   const handleExternalPaymentConfirmed = async () => {
-  if (!pendingOrder) return;
+    if (!pendingOrder) return;
+    setProcessing(true);
+    try {
+      await sendOrderEmails(pendingOrder);
+      toast.success("Order confirmed!", { description: "Check your email for your order details." });
+      setCart([]);
+      setAgreements({ terms: false, returns: false, privacy: false });
+      setPaymentConfirmOpen(false);
+      setCartOpen(false);
+    } catch {
+      toast.error("We could not send your confirmation email. Please contact godscentoils99@gmail.com.");
+    }
+    setProcessing(false);
+  };
 
-  setProcessing(true);
-
-  try {
-    await sendOrderEmails(pendingOrder);
-
-    toast.success("Order confirmed!", {
-      description: "Your payment has been received and your order is now being prepared.",
-    });
-
-    setCart([]);
-    setAgreements({
-      terms: false,
-      returns: false,
-      privacy: false,
-    });
-
-    setPaymentConfirmOpen(false);
-    setAwaitingPayment(false);
-    setCartOpen(false);
-  } catch (err) {
-    console.error("Payment confirmation error:", err);
-
-    toast.error(
-      "We could not finalize your order automatically. Please contact godscentoils99@gmail.com."
-    );
-  }
-
-  setProcessing(false);
-};
- 
   const handleZelleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -329,27 +287,25 @@ if (selectedPayment === "Cash App") {
     reader.onload = () => setZelleScreenshot(reader.result as string);
     reader.readAsDataURL(file);
   };
- 
+
   const handleZelleConfirm = async () => {
     if (!zelleScreenshot) { toast.error("Please upload a screenshot of your Zelle payment."); return; }
     if (zelleRef.length < 4) { toast.error("Please enter the last 4 digits of the phone number used."); return; }
     if (!pendingOrder) return;
     setProcessing(true);
     try {
-      const orderWithProof: OrderData = { ...pendingOrder, paymentMethod: `Zelle (Last 4 digits: ...${zelleRef}, Screenshot: UPLOADED & VERIFIED)` };
+      const orderWithProof: OrderData = { ...pendingOrder, paymentMethod: `Zelle (Last 4 digits: ...${zelleRef}, Screenshot: UPLOADED)` };
       await sendOrderEmails(orderWithProof);
       setZelleStep("confirmed");
       setCart([]);
       setAgreements({ terms: false, returns: false, privacy: false });
       toast.success("Payment verified! Order confirmation sent to your email.");
-    } catch (err) {
-      console.error("Zelle confirm error:", err);
-      console.log("Full error object:", JSON.stringify(err, null, 2));
+    } catch {
       toast.error("Email failed. Contact us at godscentoils99@gmail.com with your screenshot.");
     }
     setProcessing(false);
   };
- 
+
   const closeZelle = () => {
     const wasConfirmed = zelleStep === "confirmed";
     setZelleOpen(false);
@@ -358,10 +314,10 @@ if (selectedPayment === "Cash App") {
     setZelleRef("");
     if (wasConfirmed) setCartOpen(false);
   };
- 
+
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
- 
+
       {/* NAV */}
       <header className="fixed top-0 inset-x-0 z-50 backdrop-blur-md bg-background/70 border-b border-border/40">
         <nav className="max-w-7xl mx-auto px-6 lg:px-12 h-24 flex items-center justify-between">
@@ -383,7 +339,7 @@ if (selectedPayment === "Cash App") {
           </button>
         </nav>
       </header>
- 
+
       {/* HERO */}
       <section id="top" className="pt-32 pb-24 lg:pt-40 lg:pb-32">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 grid lg:grid-cols-12 gap-12 items-center">
@@ -404,20 +360,14 @@ if (selectedPayment === "Cash App") {
           </div>
           <div className="lg:col-span-5 relative animate-fade-in">
             <div className="absolute -inset-8 bg-gradient-amber opacity-10 blur-3xl rounded-full" />
-<img
-  src={heroBottle}
-  alt="God Scent signature amber bottle"
-  className="relative w-full h-[560px] lg:h-[700px] object-cover rounded-2xl shadow-elegant"
-  width={1080}
-  height={1920}
-/>
+            <img src={heroBottle} alt="God Scent signature amber bottle" className="relative w-full h-[560px] lg:h-[700px] object-cover rounded-2xl shadow-elegant" width={1080} height={1920} />
             <div className="absolute -left-6 top-12 hidden lg:block text-xs tracking-luxury uppercase text-stone-700 rotate-180" style={{ writingMode: "vertical-rl" }}>
               Pure - Botanical - Unhurried
             </div>
           </div>
         </div>
       </section>
- 
+
       {/* MARQUEE */}
       <section className="border-y border-border/60 py-8 overflow-hidden bg-secondary/40">
         <div className="flex animate-marquee whitespace-nowrap">
@@ -430,7 +380,7 @@ if (selectedPayment === "Cash App") {
           ))}
         </div>
       </section>
- 
+
       {/* COLLECTION */}
       <section id="collection" className="py-32 lg:py-40">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
@@ -441,27 +391,12 @@ if (selectedPayment === "Cash App") {
                 Newly featured. <em className="italic text-amber-deep">Each</em> a daily essential, bottled with intention.
               </h2>
             </div>
-
-             {/* PRODUCT GRID */}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {products.map((p) => (
+            {products.map((p) => (
               <article key={p.no} className="group transition-transform duration-500 hover:-translate-y-1">
                 <div className="relative overflow-hidden bg-secondary/50 aspect-[4/5] mb-6">
-<img
-  src={p.image}
-  alt={`${p.name} oil bottle`}
-  className="
-    absolute inset-0
-    w-full h-full
-    object-cover
-    rounded-2xl
-    transition-transform
-    duration-700
-    group-hover:scale-105
-  "
-  loading="lazy"
-/>
+                  <img src={p.image} alt={`${p.name} oil bottle`} className="absolute inset-0 w-full h-full object-cover rounded-2xl transition-transform duration-700 group-hover:scale-105" loading="lazy" />
                   <span className="absolute top-6 left-6 text-xs tracking-luxury uppercase text-cream drop-shadow-md">{p.no}</span>
                   <span className="absolute top-6 right-6 font-serif text-xl text-cream drop-shadow-md">${p.price}</span>
                 </div>
@@ -475,19 +410,12 @@ if (selectedPayment === "Cash App") {
           </div>
         </div>
       </section>
- 
+
       {/* CRAFT */}
       <section id="craft" className="py-32 lg:py-40 bg-secondary/40">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 grid lg:grid-cols-12 gap-16 items-center">
           <div className="lg:col-span-6 order-2 lg:order-1">
-<img
-  src={craft}
-  alt="Hands pouring oil into a small glass bottle"
-  className="w-full h-[620px] object-cover rounded-2xl shadow-elegant"
-  loading="lazy"
-  width={1080}
-  height={1920}
-/>
+            <img src={craft} alt="Hands pouring oil into a small glass bottle" className="w-full h-[620px] object-cover rounded-2xl shadow-elegant" loading="lazy" width={1080} height={1920} />
           </div>
           <div className="lg:col-span-6 order-1 lg:order-2">
             <p className="text-xs tracking-luxury uppercase text-stone-700 mb-8">-- The Craft</p>
@@ -511,7 +439,7 @@ if (selectedPayment === "Cash App") {
           </div>
         </div>
       </section>
- 
+
       {/* EDITORIAL */}
       <section className="py-32">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
@@ -525,7 +453,7 @@ if (selectedPayment === "Cash App") {
           </div>
         </div>
       </section>
- 
+
       {/* TESTIMONIALS */}
       <section id="testimonials" className="py-32 lg:py-40 bg-secondary/40">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
@@ -539,9 +467,9 @@ if (selectedPayment === "Cash App") {
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { quote: "Baccarat has become a small daily ritual. It smells like a memory I didn't know I had.",                                                   name: "Elena M.",  role: "Brooklyn, NY",       photo: review1 },
-              { quote: "I stock God Scent in my apothecary and customers return for them again and again. Truly exceptional craft.",                               name: "Juno Hale", role: "Owner, House of Hale", photo: review2 },
-              { quote: "Bond is the most honest fragrance I own. Nothing showy -- just quiet, warm, and entirely itself.",                                         name: "Marisol R.", role: "Lisbon, PT",          photo: review3 },
+              { quote: "Baccarat has become a small daily ritual. It smells like a memory I didn't know I had.",                              name: "Elena M.",   role: "Brooklyn, NY",        photo: review1 },
+              { quote: "I stock God Scent in my apothecary and customers return for them again and again. Truly exceptional craft.",           name: "Juno Hale",  role: "Owner, House of Hale", photo: review2 },
+              { quote: "Bond is the most honest fragrance I own. Nothing showy -- just quiet, warm, and entirely itself.",                    name: "Marisol R.", role: "Lisbon, PT",           photo: review3 },
             ].map((t) => (
               <figure key={t.name} className="bg-background border border-border p-10 flex flex-col h-full">
                 <div className="font-serif text-5xl text-amber-deep leading-none mb-6">"</div>
@@ -558,54 +486,85 @@ if (selectedPayment === "Cash App") {
           </div>
         </div>
       </section>
- 
-      {/* CONTACT */}
+
+      {/* CONTACT — restored original two-column layout with form + mailto button */}
       <section id="contact" className="py-32 lg:py-40">
         <div className="max-w-5xl mx-auto px-6 lg:px-12 grid md:grid-cols-2 gap-16">
           <div>
             <p className="text-xs tracking-luxury uppercase text-stone-700 mb-6">-- Contact</p>
-            <h2 className="font-serif text-5xl md:text-6xl leading-[1.05] mb-8 text-balance">Say <em className="italic text-amber-deep">hello.</em></h2>
-                        <p className="text-stone-700 leading-relaxed mb-6">Questions about the collection, a custom order, or just want to write? We read every note.</p>
+            <h2 className="font-serif text-5xl md:text-6xl leading-[1.05] mb-8 text-balance">
+              Say <em className="italic text-amber-deep">hello.</em>
+            </h2>
+            <p className="text-stone-700 leading-relaxed mb-6">
+              Questions about the collection, a custom order, or just want to write? We read every note.
+            </p>
             <p className="font-serif text-lg">godscentoils99@gmail.com</p>
-           </div>
- <div
-  className="flex justify-center md:justify-end"
-  style={{ marginTop: "6rem" }}
->
-  <Button
-    size="lg"
-    variant="outline"
-    className="px-8 py-6 text-base"
-  >
-    <a
-      href="mailto:godscentoils99@gmail.com?subject=God%20Scent%20Inquiry"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="w-full h-full flex items-center justify-center"
-    >
-      Send Message
-    </a>
-  </Button>
-</div>
+          </div>
+
+          {/* Form — clicking Send Message sends via EmailJS AND opens Gmail compose in a new tab */}
+          <form onSubmit={handleContact} className="space-y-5">
+            <Input
+              required
+              name="name"
+              placeholder="Name"
+              className="rounded-none border-0 border-b border-border bg-transparent focus-visible:ring-0 focus-visible:border-amber px-0 h-12"
+            />
+            <Input
+              required
+              type="email"
+              name="email"
+              placeholder="Email"
+              className="rounded-none border-0 border-b border-border bg-transparent focus-visible:ring-0 focus-visible:border-amber px-0 h-12"
+            />
+            <Textarea
+              required
+              name="message"
+              placeholder="Message"
+              rows={5}
+              className="rounded-none border-0 border-b border-border bg-transparent focus-visible:ring-0 focus-visible:border-amber px-0 resize-none"
+            />
+            <Button
+              type="submit"
+              className="rounded-none bg-foreground text-background hover:bg-amber-deep h-12 px-10 text-xs tracking-luxury uppercase"
+            >
+              Send Message
+            </Button>
+          </form>
         </div>
       </section>
- 
+
+      {/* NEWSLETTER */}
+      <section className="py-24 bg-foreground text-background">
+        <div className="max-w-4xl mx-auto px-6 lg:px-12 text-center">
+          <h3 className="font-serif text-4xl md:text-5xl mb-6 text-balance">
+            Letters from the <em className="italic" style={{ color: "hsl(var(--amber))" }}>atelier</em>.
+          </h3>
+          <p className="text-background/70 mb-10 max-w-xl mx-auto">A quiet note when the next batch is ready. No more, no less.</p>
+          <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+            <Input
+              type="email"
+              required
+              placeholder="your@email.com"
+              value={emailInput}
+              onChange={(e) => setEmailInput(e.target.value)}
+              className="rounded-none border-0 border-b border-background/30 bg-transparent text-background placeholder:text-background/40 focus-visible:ring-0 focus-visible:border-amber px-0 h-12"
+            />
+            <Button type="submit" className="rounded-none bg-background text-foreground hover:bg-amber hover:text-background h-12 px-8 text-xs tracking-luxury uppercase">
+              Subscribe
+            </Button>
+          </form>
+        </div>
+      </section>
+
       {/* FOOTER */}
       <footer className="py-16 border-t border-border">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 grid md:grid-cols-3 gap-12 items-start">
-         <div>
-  <a href="#top">
-    <img
-      src={logo}
-      alt="God Scent"
-      className="h-24 w-auto mb-4 hover:opacity-80 transition-opacity"
-    />
-  </a>
-
-  <p className="text-sm text-stone-700 italic max-w-xs">
-    Handcrafted botanical oils, made slowly in small batches.
-  </p>
-</div>
+          <div>
+            <a href="#top">
+              <img src={logo} alt="God Scent" className="h-24 w-auto mb-4 hover:opacity-80 transition-opacity" />
+            </a>
+            <p className="text-sm text-stone-700 italic max-w-xs">Handcrafted botanical oils, made slowly in small batches.</p>
+          </div>
           <div>
             <p className="text-xs tracking-luxury uppercase text-stone-700 mb-4">Follow</p>
             <ul className="space-y-2 font-serif text-lg">
@@ -630,7 +589,7 @@ if (selectedPayment === "Cash App") {
           <p className="italic font-serif">Made by hand - Bottled with care</p>
         </div>
       </footer>
- 
+
       {/* CART / CHECKOUT */}
       {cartOpen && (
         <div className="fixed inset-0 z-[60] flex items-stretch justify-center bg-background animate-fade-in overflow-y-auto">
@@ -650,17 +609,7 @@ if (selectedPayment === "Cash App") {
                   <div className="space-y-8">
                     {cart.map((i) => (
                       <div key={i.name} className="flex gap-6 border-b border-border pb-8">
-                        <img
-  src={i.image}
-  alt={i.name}
-  className="
-    h-24 w-24
-    object-cover
-    rounded-xl
-    bg-secondary/50
-    flex-shrink-0
-  "
-/>
+                        <img src={i.image} alt={i.name} className="h-24 w-24 object-cover rounded-xl bg-secondary/50 flex-shrink-0" />
                         <div className="flex-1">
                           <div className="flex justify-between items-start">
                             <h4 className="font-serif text-2xl">{i.name}</h4>
@@ -683,7 +632,7 @@ if (selectedPayment === "Cash App") {
                     <div className="flex justify-between font-serif text-2xl pt-3 border-t border-border"><span>Total</span><span className="text-amber-deep">${cartTotal}</span></div>
                   </div>
                 </div>
- 
+
                 <form onSubmit={handleCheckout} className="space-y-6 lg:sticky lg:top-24">
                   <p className="text-xs tracking-luxury uppercase text-stone-700 mb-2">-- Checkout</p>
                   <div className="space-y-4">
@@ -700,51 +649,29 @@ if (selectedPayment === "Cash App") {
                     </div>
                     <Input required name="country" placeholder="Country"          className="rounded-none border-0 border-b border-border bg-transparent focus-visible:ring-0 focus-visible:border-amber px-0 h-12 text-base" />
                   </div>
- 
-                 <div className="space-y-3">
 
-  <p className="text-xs tracking-luxury uppercase text-stone-700">
-    Pay with
-  </p>
+                  <div className="space-y-3">
+                    <p className="text-xs tracking-luxury uppercase text-stone-700">Pay with</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {PAYMENT_METHODS.map((m) => {
+                        const Icon = PaymentIcons[m];
+                        const active = selectedPayment === m;
+                        return (
+                          <button type="button" key={m} onClick={() => setSelectedPayment(m)}
+                            className={["flex flex-col items-center justify-center gap-1.5 border h-16 px-1 transition-all duration-200 text-[10px] tracking-wide uppercase",
+                              active ? "border-amber bg-amber/5 text-amber" : "border-border text-stone-700 hover:border-amber/50 hover:text-foreground hover:bg-secondary/60"].join(" ")}
+                            style={active ? { boxShadow: "inset 0 0 0 1px hsl(var(--amber) / 0.3)" } : {}} aria-pressed={active}>
+                            <Icon active={active} />
+                            <span className="leading-none">{m}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="text-xs text-stone-600 text-center leading-relaxed pt-1">
+                      Some browsers or ad blockers may prevent payment windows from opening automatically.
+                    </p>
+                  </div>
 
-  <div className="grid grid-cols-3 gap-2">
-
-    {PAYMENT_METHODS.map((m) => {
-      const Icon = PaymentIcons[m];
-      const active = selectedPayment === m;
-
-      return (
-        <button
-          type="button"
-          key={m}
-          onClick={() => setSelectedPayment(m)}
-          className={[
-            "flex flex-col items-center justify-center gap-1.5 border h-16 px-1 transition-all duration-200 text-[10px] tracking-wide uppercase",
-            active
-              ? "border-amber bg-amber/5 text-amber"
-              : "border-border text-stone-700 hover:border-amber/50 hover:text-foreground hover:bg-secondary/60",
-          ].join(" ")}
-          style={
-            active
-              ? { boxShadow: "inset 0 0 0 1px hsl(var(--amber) / 0.3)" }
-              : {}
-          }
-          aria-pressed={active}
-        >
-          <Icon active={active} />
-          <span className="leading-none">{m}</span>
-        </button>
-      );
-    })}
-
-  </div>
-
-  <p className="text-xs text-stone-600 text-center leading-relaxed pt-2">
-    Some browsers or ad blockers may prevent payment windows from opening automatically.
-  </p>
-
-</div>
- 
                   {selectedPayment === "PayPal" && (
                     <div className="bg-secondary/40 border border-amber/20 p-5 space-y-2">
                       <p className="text-xs tracking-luxury uppercase text-stone-700">PayPal Instructions</p>
@@ -757,7 +684,7 @@ if (selectedPayment === "Cash App") {
                       <p className="text-xs tracking-luxury uppercase text-stone-700">Zelle Instructions</p>
                       <p className="font-serif text-base">Send <span className="text-amber-deep font-semibold">${cartTotal}</span> to <span className="font-semibold">VaShawn Marshall</span> via Zelle.</p>
                       <p className="text-xs text-stone-700">Phone: (202) 246-4685</p>
-                      <p className="text-xs text-stone-700">After clicking checkout, you will upload a screenshot of your completed Zelle payment as proof. Your order is confirmed once we verify it.</p>
+                      <p className="text-xs text-stone-700">After clicking checkout, upload a screenshot of your completed Zelle payment as proof. Your order is confirmed once we verify it.</p>
                     </div>
                   )}
                   {selectedPayment === "Cash App" && (
@@ -767,13 +694,13 @@ if (selectedPayment === "Cash App") {
                       <p className="text-xs text-stone-700">You will be redirected to Cash App after checkout. Include your name in the payment note.</p>
                     </div>
                   )}
- 
+
                   <div className="space-y-3 pt-2 border-t border-border/60">
                     <p className="text-xs tracking-luxury uppercase text-stone-700">Before you buy</p>
                     {([
-                      { key: "terms"   as const, label: "I agree to the",                              link: "Terms of Service",       modal: "terms"   as PolicyType },
+                      { key: "terms"   as const, label: "I agree to the",                              link: "Terms of Service",         modal: "terms"   as PolicyType },
                       { key: "returns" as const, label: "I have read the",                             link: "Return and Refund Policy", modal: "returns" as PolicyType },
-                      { key: "privacy" as const, label: "I understand how my data is handled per the", link: "Privacy Policy",         modal: "privacy" as PolicyType },
+                      { key: "privacy" as const, label: "I understand how my data is handled per the", link: "Privacy Policy",           modal: "privacy" as PolicyType },
                     ]).map(({ key, label, link, modal }) => (
                       <label key={key} className="flex items-start gap-3 cursor-pointer group">
                         <div className="mt-0.5 relative flex-shrink-0">
@@ -794,13 +721,13 @@ if (selectedPayment === "Cash App") {
                       </label>
                     ))}
                   </div>
- 
+
                   <Button type="submit" disabled={!allAgreed || processing || cart.length === 0}
                     className={["w-full rounded-none h-14 text-sm tracking-luxury uppercase transition-all",
                       allAgreed ? "bg-foreground text-background hover:bg-amber-deep" : "bg-foreground/30 text-background/50 cursor-not-allowed"].join(" ")}>
                     {processing ? "Processing..." : `Complete Checkout -- $${cartTotal}`}
                   </Button>
- 
+
                   <div className="flex items-center justify-center gap-8 pt-1">
                     <span className="flex items-center gap-1.5 text-[11px] text-stone-700 tracking-wide"><Lock className="h-3 w-3" /> SSL Secured</span>
                     <span className="flex items-center gap-1.5 text-[11px] text-stone-700 tracking-wide"><Shield className="h-3 w-3" /> Secure Checkout</span>
@@ -812,13 +739,13 @@ if (selectedPayment === "Cash App") {
           </div>
         </div>
       )}
- 
+
       {/* ZELLE 3-STEP PROOF MODAL */}
       {zelleOpen && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-foreground/50 backdrop-blur-sm" />
           <div className="relative bg-background border border-border shadow-elegant w-full max-w-md animate-fade-in" onClick={(e) => e.stopPropagation()}>
- 
+
             {zelleStep === "instructions" && (
               <div className="p-8 space-y-5 text-center">
                 <button onClick={closeZelle} className="absolute top-4 right-4 text-stone-700 hover:text-amber"><X className="h-5 w-5" /></button>
@@ -836,7 +763,7 @@ if (selectedPayment === "Cash App") {
                 </Button>
               </div>
             )}
- 
+
             {zelleStep === "upload" && (
               <div className="p-8 space-y-5">
                 <button onClick={closeZelle} className="absolute top-4 right-4 text-stone-700 hover:text-amber"><X className="h-5 w-5" /></button>
@@ -845,8 +772,7 @@ if (selectedPayment === "Cash App") {
                 <p className="text-sm text-stone-700 text-center leading-relaxed">
                   Take a screenshot of your Zelle confirmation screen showing the payment went through. Upload it here so we can verify and ship your order.
                 </p>
-                <div className="border-2 border-dashed border-border hover:border-amber/50 transition-colors p-6 text-center cursor-pointer rounded-sm"
-                  onClick={() => zelleFileRef.current?.click()}>
+                <div className="border-2 border-dashed border-border hover:border-amber/50 transition-colors p-6 text-center cursor-pointer rounded-sm" onClick={() => zelleFileRef.current?.click()}>
                   <input ref={zelleFileRef} type="file" accept="image/*" className="sr-only" onChange={handleZelleFileChange} />
                   {zelleScreenshot ? (
                     <div className="space-y-2">
@@ -874,7 +800,7 @@ if (selectedPayment === "Cash App") {
                 </Button>
               </div>
             )}
- 
+
             {zelleStep === "confirmed" && (
               <div className="p-8 space-y-4 text-center">
                 <CheckCircle className="h-14 w-14 mx-auto text-amber-deep" />
@@ -888,88 +814,48 @@ if (selectedPayment === "Cash App") {
           </div>
         </div>
       )}
- {paymentConfirmOpen && (
-  <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
-    <div className="absolute inset-0 bg-foreground/50 backdrop-blur-sm" />
 
-    <div
-      className="relative bg-background border border-border shadow-elegant w-full max-w-md animate-fade-in"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <div className="p-8 space-y-5 text-center">
-
-        <button
-          onClick={() => setPaymentConfirmOpen(false)}
-          className="absolute top-4 right-4 text-stone-700 hover:text-amber"
-        >
-          <X className="h-5 w-5" />
-        </button>
-
-        <p className="text-xs tracking-luxury uppercase text-stone-700">
-          -- Complete Payment
-        </p>
-
-        <h4 className="font-serif text-2xl">
-          Finalize your order
-        </h4>
-
-        <p className="text-sm text-stone-700 leading-relaxed">
-          Complete your payment in the opened app or tab.
-          Once your payment has been submitted,
-          return here to finalize your order.
-        </p>
-
-        <div className="bg-secondary/40 border border-border p-4 text-left">
-          <p className="text-xs tracking-luxury uppercase text-stone-700 mb-2">
-            Payment Method
-          </p>
-
-          <p className="font-serif text-lg">
-            {selectedPayment}
-          </p>
-
-          <p className="mt-2 text-sm text-stone-700">
-            Total: ${cartTotal}
-          </p>
+      {/* PAYPAL / CASH APP PAYMENT CONFIRM MODAL */}
+      {paymentConfirmOpen && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-foreground/50 backdrop-blur-sm" />
+          <div className="relative bg-background border border-border shadow-elegant w-full max-w-md animate-fade-in" onClick={(e) => e.stopPropagation()}>
+            <div className="p-8 space-y-5 text-center">
+              <button onClick={() => setPaymentConfirmOpen(false)} className="absolute top-4 right-4 text-stone-700 hover:text-amber">
+                <X className="h-5 w-5" />
+              </button>
+              <p className="text-xs tracking-luxury uppercase text-stone-700">-- Complete Payment</p>
+              <h4 className="font-serif text-2xl">Finalize your order</h4>
+              <p className="text-sm text-stone-700 leading-relaxed">
+                Complete your payment in the opened tab. Once your payment has gone through, return here and click the button below to confirm your order.
+              </p>
+              <div className="bg-secondary/40 border border-border p-4 text-left space-y-1">
+                <p className="text-xs tracking-luxury uppercase text-stone-700">Payment Method</p>
+                <p className="font-serif text-lg">{selectedPayment}</p>
+                <p className="text-sm text-stone-700">Total: <span className="text-amber-deep font-semibold">${cartTotal}</span></p>
+              </div>
+              <div className="space-y-3 pt-2">
+                <Button onClick={handleExternalPaymentConfirmed} disabled={processing}
+                  className="w-full rounded-none bg-foreground text-background hover:bg-amber-deep h-12 text-xs tracking-luxury uppercase">
+                  {processing ? "Confirming..." : "Payment Sent — Confirm My Order"}
+                </Button>
+                <Button type="button" variant="outline"
+                  onClick={() => {
+                    setPaymentConfirmOpen(false);
+                    toast.message("No problem — return here once you have completed payment.");
+                  }}
+                  className="w-full rounded-none h-12 text-xs tracking-luxury uppercase">
+                  Not Yet
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
+      )}
 
-        <div className="space-y-3 pt-2">
-
-          <Button
-            onClick={handleExternalPaymentConfirmed}
-            disabled={processing}
-            className="w-full rounded-none bg-foreground text-background hover:bg-amber-deep h-12 text-xs tracking-luxury uppercase"
-          >
-            {processing
-              ? "Confirming..."
-              : "Payment Sent"}
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              
-              setPaymentConfirmOpen(false);
-
-              toast.message(
-                "No problem — you can return and confirm your payment whenever you're ready."
-              );
-            }}
-            className="w-full rounded-none h-12 text-xs tracking-luxury uppercase"
-          >
-            Not Yet
-          </Button>
-
-        </div>
-      </div>
-    </div>
-  </div>
-)}
       <PolicyModal type={policyModal} onClose={() => setPolicyModal(null)} />
     </div>
   );
 };
- 
-export default Index;
 
+export default Index;
