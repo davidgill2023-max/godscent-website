@@ -576,12 +576,15 @@ if (selectedPayment === "Cash App") {
     size="lg"
     variant="outline"
     className="px-8 py-6 text-base"
-    onClick={() => {
-      window.location.href =
-        "mailto:godscentoils99@gmail.com?subject=God%20Scent%20Inquiry";
-    }}
   >
-    Send Message
+    <a
+      href="mailto:godscentoils99@gmail.com?subject=God%20Scent%20Inquiry"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="w-full h-full flex items-center justify-center"
+    >
+      Send Message
+    </a>
   </Button>
 </div>
         </div>
@@ -698,39 +701,49 @@ if (selectedPayment === "Cash App") {
                     <Input required name="country" placeholder="Country"          className="rounded-none border-0 border-b border-border bg-transparent focus-visible:ring-0 focus-visible:border-amber px-0 h-12 text-base" />
                   </div>
  
-                  <div className="space-y-3">
-                    <p className="text-xs tracking-luxury uppercase text-stone-700">Pay with</p>
-                    <div className="grid grid-cols-3 gap-2">
-                      {PAYMENT_METHODS.map((m) => {
-                        const Icon = PaymentIcons[m];
-                        const active = selectedPayment === m;
-                        return (
-                          <button type="button" key={m} onClick={() => setSelectedPayment(m)}
-                            className={["flex flex-col items-center justify-center gap-1.5 border h-16 px-1 transition-all duration-200 text-[10px] tracking-wide uppercase",
-                              active ? "border-amber bg-amber/5 text-amber" : "border-border text-stone-700 hover:border-amber/50 hover:text-foreground hover:bg-secondary/60"].join(" ")}
-                            style={active ? { boxShadow: "inset 0 0 0 1px hsl(var(--amber) / 0.3)" } : {}} aria-pressed={active}>
-                            <Icon active={active} />
-                            <span className="leading-none">{m}</span>
-                          </button>
-                        );
-                      })}
-                      <div className="space-y-4">
+                 <div className="space-y-3">
 
-  <Button>
-    Pay with PayPal
-  </Button>
+  <p className="text-xs tracking-luxury uppercase text-stone-700">
+    Pay with
+  </p>
 
-  <Button>
-    Pay with Cash App
-  </Button>
+  <div className="grid grid-cols-3 gap-2">
 
-  <p className="text-xs text-stone-600 mt-3 text-center leading-relaxed">
-  Some browsers or ad blockers may prevent payment windows from opening automatically.
-</p>
+    {PAYMENT_METHODS.map((m) => {
+      const Icon = PaymentIcons[m];
+      const active = selectedPayment === m;
+
+      return (
+        <button
+          type="button"
+          key={m}
+          onClick={() => setSelectedPayment(m)}
+          className={[
+            "flex flex-col items-center justify-center gap-1.5 border h-16 px-1 transition-all duration-200 text-[10px] tracking-wide uppercase",
+            active
+              ? "border-amber bg-amber/5 text-amber"
+              : "border-border text-stone-700 hover:border-amber/50 hover:text-foreground hover:bg-secondary/60",
+          ].join(" ")}
+          style={
+            active
+              ? { boxShadow: "inset 0 0 0 1px hsl(var(--amber) / 0.3)" }
+              : {}
+          }
+          aria-pressed={active}
+        >
+          <Icon active={active} />
+          <span className="leading-none">{m}</span>
+        </button>
+      );
+    })}
+
+  </div>
+
+  <p className="text-xs text-stone-600 text-center leading-relaxed pt-2">
+    Some browsers or ad blockers may prevent payment windows from opening automatically.
+  </p>
 
 </div>
-                    </div>
-                  </div>
  
                   {selectedPayment === "PayPal" && (
                     <div className="bg-secondary/40 border border-amber/20 p-5 space-y-2">
