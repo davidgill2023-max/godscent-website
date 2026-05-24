@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Instagram, ShoppingBag, X, Plus, Minus, Shield, RotateCcw, Lock, Upload, CheckCircle } from "lucide-react";
+import { Instagram, ShoppingBag, X, Plus, Minus, Shield, RotateCcw, Lock, Upload, CheckCircle, Menu } from "lucide-react";
 import logo from "@/assets/godscent-logo.png";
 import heroBottle from "@/assets/hero-bottle.jpg";
 import collection from "@/assets/collection.jpg";
@@ -135,17 +135,16 @@ async function sendOrderEmails(orderData: OrderData) {
   await emailjs.send(SERVICE_ID, CUSTOMER_TEMPLATE_ID, { ...params, to_email: orderData.customerEmail },    PUBLIC_KEY);
 }
 
-async function sendContactEmail(name: string, email: string, message: string) {
+async function sendContactEmail(name: string, replyEmail: string, message: string) {
   await emailjs.send(SERVICE_ID, CONTACT_TEMPLATE_ID, {
     from_name:  name,
-    from_email: email,
+    from_email: replyEmail,
     message:    message,
     to_email:   "godscentoils99@gmail.com",
   }, PUBLIC_KEY);
 }
 
 const Index = () => {
-  const [emailInput, setEmailInput]                 = useState("");
   const [pendingOrder, setPendingOrder]             = useState<OrderData | null>(null);
   const [cart, setCart]                             = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen]                     = useState(false);
@@ -159,11 +158,21 @@ const Index = () => {
   const [zelleRef, setZelleRef]                     = useState("");
   const zelleFileRef                                = useRef<HTMLInputElement>(null);
   const [paymentConfirmOpen, setPaymentConfirmOpen] = useState(false);
+  // Mobile nav
+  const [mobileNavOpen, setMobileNavOpen]           = useState(false);
 
+  // Lock body scroll when cart is open
   useEffect(() => {
     document.body.style.overflow = cartOpen ? "hidden" : "auto";
     return () => { document.body.style.overflow = "auto"; };
   }, [cartOpen]);
+
+  // Close mobile nav on scroll
+  useEffect(() => {
+    const handleScroll = () => setMobileNavOpen(false);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const addToCart = (p: typeof products[number]) => {
     setCart((prev) => {
@@ -184,7 +193,10 @@ const Index = () => {
   const cartTotal = cart.reduce((s, i) => s + i.qty * i.price, 0);
   const allAgreed = agreements.terms && agreements.returns && agreements.privacy;
 
-  // ── Contact: sends via EmailJS AND opens Gmail in new tab ─────────────────────
+  // Detect if user is on a mobile device (iOS/Android native email apps)
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+  // Contact form — sends via EmailJS on desktop, opens native mail app on mobile
   const handleContact = async (e: React.FormEvent) => {
     e.preventDefault();
     const form    = e.target as HTMLFormElement;
@@ -192,32 +204,26 @@ const Index = () => {
     const email   = (form.elements.namedItem("email")   as HTMLInputElement).value;
     const message = (form.elements.namedItem("message") as HTMLTextAreaElement).value;
 
-    // Open Gmail compose in a new tab
-    const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=godscentoils99%40gmail.com&su=${encodeURIComponent("God Scent Inquiry from " + name)}&body=${encodeURIComponent(message + "\n\nReply to: " + email)}`;
-    window.open(gmailUrl, "_blank", "noopener,noreferrer");
-
-    // Also send via EmailJS so you get a notification regardless
-    try {
-      await sendContactEmail(name, email, message);
-    } catch {
-      // silent — Gmail tab already opened as primary delivery
+    if (isMobile) {
+      // On mobile: open the native mail app with fields pre-filled — most reliable cross-platform approach
+      const mailtoLink = `mailto:godscentoils99@gmail.com?subject=${encodeURIComponent("God Scent Inquiry from " + name)}&body=${encodeURIComponent(message + "\n\nFrom: " + name + "\nReply to: " + email)}`;
+      window.location.href = mailtoLink;
+      // Also fire EmailJS silently in background as a backup copy
+      sendContactEmail(name, email, message).catch(() => {});
+      toast.success("Opening your mail app...", { description: "Your message is pre-filled — just hit send." });
+    } else {
+      // On desktop: send via EmailJS (arrives directly in inbox) then open Gmail compose as backup
+      try {
+        await sendContactEmail(name, email, message);
+        toast.success("Message sent!", { description: "We will be in touch within two business days." });
+      } catch {
+        // EmailJS failed — fall back to Gmail compose tab
+        const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=godscentoils99%40gmail.com&su=${encodeURIComponent("God Scent Inquiry from " + name)}&body=${encodeURIComponent(message + "\n\nReply to: " + email)}`;
+        window.open(gmailUrl, "_blank", "noopener,noreferrer");
+        toast.info("Opening Gmail as a backup...", { description: "Your EmailJS template may need to be checked." });
+      }
     }
-
-    toast.success("Message sent!", { description: "Your Gmail compose window has opened. We will be in touch within two business days." });
     form.reset();
-  };
-
-  const handleSubscribe = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!emailInput) return;
-    try {
-      await emailjs.send(SERVICE_ID, ADMIN_TEMPLATE_ID, {
-        to_email: "godscentoils99@gmail.com", customer_name: "Newsletter subscriber",
-        customer_email: emailInput, items: "---", total: "---", payment_method: "Newsletter signup", address: "---",
-      }, PUBLIC_KEY);
-    } catch { /* silent */ }
-    toast.success("Welcome to the atelier", { description: "We'll write when the next batch is ready." });
-    setEmailInput("");
   };
 
   const handleCheckout = async (e: React.FormEvent) => {
@@ -248,21 +254,18 @@ const Index = () => {
     setProcessing(false);
 
     if (selectedPayment === "PayPal") {
-      // paypal.me/USERNAME is the correct deep-link format
       window.open("https://paypal.me/VaShawnMarshall/" + cartTotal, "_blank", "noopener,noreferrer");
       setPaymentConfirmOpen(true);
       return;
     }
 
     if (selectedPayment === "Cash App") {
-      // Cash App deep link — $cashtag format; amount auto-fills on mobile
       window.open("https://cash.app/$GodscentOils/" + cartTotal, "_blank", "noopener,noreferrer");
       setPaymentConfirmOpen(true);
       return;
     }
   };
 
-  // Called when customer clicks "Payment Sent" after returning from PayPal/CashApp
   const handleExternalPaymentConfirmed = async () => {
     if (!pendingOrder) return;
     setProcessing(true);
@@ -315,29 +318,78 @@ const Index = () => {
     if (wasConfirmed) setCartOpen(false);
   };
 
+  const navLinks = [
+    { href: "#collection",   label: "Collection"  },
+    { href: "#craft",        label: "The Craft"   },
+    { href: "#testimonials", label: "Reviews"     },
+    { href: "#contact",      label: "Contact"     },
+  ];
+
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
 
       {/* NAV */}
       <header className="fixed top-0 inset-x-0 z-50 backdrop-blur-md bg-background/70 border-b border-border/40">
         <nav className="max-w-7xl mx-auto px-6 lg:px-12 h-24 flex items-center justify-between">
-          <a href="#top" className="flex items-center gap-2">
+
+          {/* Logo */}
+          <a href="#top" className="flex items-center gap-2 flex-shrink-0">
             <img src={logo} alt="God Scent" className="h-32 w-auto" />
           </a>
+
+          {/* Desktop links — hidden below md */}
           <ul className="hidden md:flex items-center gap-10 text-xs tracking-luxury uppercase">
-            <li><a href="#collection"   className="hover:text-amber transition-colors">Collection</a></li>
-            <li><a href="#craft"        className="hover:text-amber transition-colors">The Craft</a></li>
-            <li><a href="#testimonials" className="hover:text-amber transition-colors">Reviews</a></li>
-            <li><a href="#contact"      className="hover:text-amber transition-colors">Contact</a></li>
+            {navLinks.map((l) => (
+              <li key={l.href}>
+                <a href={l.href} className="hover:text-amber transition-colors">{l.label}</a>
+              </li>
+            ))}
           </ul>
-          <button onClick={() => setCartOpen(true)} className="relative flex items-center gap-2 text-xs tracking-luxury uppercase hover:text-amber transition-colors" aria-label="Open cart">
-            <ShoppingBag className="h-5 w-5" />
-            <span className="hidden sm:inline">Cart</span>
-            {cartCount > 0 && (
-              <span className="absolute -top-2 -right-3 bg-amber-deep text-background text-[10px] rounded-full h-5 w-5 flex items-center justify-center font-serif">{cartCount}</span>
-            )}
-          </button>
+
+          {/* Right side — cart + hamburger */}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setCartOpen(true)}
+              className="relative flex items-center gap-2 text-xs tracking-luxury uppercase hover:text-amber transition-colors"
+              aria-label="Open cart"
+            >
+              <ShoppingBag className="h-5 w-5" />
+              <span className="hidden sm:inline">Cart</span>
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-3 bg-amber-deep text-background text-[10px] rounded-full h-5 w-5 flex items-center justify-center font-serif">{cartCount}</span>
+              )}
+            </button>
+
+            {/* Hamburger — visible below md only */}
+            <button
+              onClick={() => setMobileNavOpen((o) => !o)}
+              className="md:hidden flex items-center justify-center w-10 h-10 hover:text-amber transition-colors"
+              aria-label={mobileNavOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileNavOpen}
+            >
+              {mobileNavOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
         </nav>
+
+        {/* Mobile dropdown menu */}
+        {mobileNavOpen && (
+          <div className="md:hidden bg-background/98 backdrop-blur-md border-t border-border/40 animate-fade-in">
+            <ul className="flex flex-col px-6 py-4 gap-1">
+              {navLinks.map((l) => (
+                <li key={l.href}>
+                  <a
+                    href={l.href}
+                    onClick={() => setMobileNavOpen(false)}
+                    className="block py-3 text-sm tracking-luxury uppercase hover:text-amber transition-colors border-b border-border/30 last:border-0"
+                  >
+                    {l.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </header>
 
       {/* HERO */}
@@ -487,7 +539,10 @@ const Index = () => {
         </div>
       </section>
 
-      {/* CONTACT — restored original two-column layout with form + mailto button */}
+      {/* CONTACT
+          Desktop: fires EmailJS directly -> message arrives in your inbox silently.
+          Mobile:  opens the device's native Mail app with fields pre-filled.
+          Both paths reset the form and show a success toast. */}
       <section id="contact" className="py-32 lg:py-40">
         <div className="max-w-5xl mx-auto px-6 lg:px-12 grid md:grid-cols-2 gap-16">
           <div>
@@ -501,7 +556,6 @@ const Index = () => {
             <p className="font-serif text-lg">godscentoils99@gmail.com</p>
           </div>
 
-          {/* Form — clicking Send Message sends via EmailJS AND opens Gmail compose in a new tab */}
           <form onSubmit={handleContact} className="space-y-5">
             <Input
               required
@@ -533,30 +587,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* NEWSLETTER */}
-      <section className="py-24 bg-foreground text-background">
-        <div className="max-w-4xl mx-auto px-6 lg:px-12 text-center">
-          <h3 className="font-serif text-4xl md:text-5xl mb-6 text-balance">
-            Letters from the <em className="italic" style={{ color: "hsl(var(--amber))" }}>atelier</em>.
-          </h3>
-          <p className="text-background/70 mb-10 max-w-xl mx-auto">A quiet note when the next batch is ready. No more, no less.</p>
-          <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-            <Input
-              type="email"
-              required
-              placeholder="your@email.com"
-              value={emailInput}
-              onChange={(e) => setEmailInput(e.target.value)}
-              className="rounded-none border-0 border-b border-background/30 bg-transparent text-background placeholder:text-background/40 focus-visible:ring-0 focus-visible:border-amber px-0 h-12"
-            />
-            <Button type="submit" className="rounded-none bg-background text-foreground hover:bg-amber hover:text-background h-12 px-8 text-xs tracking-luxury uppercase">
-              Subscribe
-            </Button>
-          </form>
-        </div>
-      </section>
-
-      {/* FOOTER */}
+      {/* FOOTER — newsletter section removed */}
       <footer className="py-16 border-t border-border">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 grid md:grid-cols-3 gap-12 items-start">
           <div>
@@ -745,7 +776,6 @@ const Index = () => {
         <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-foreground/50 backdrop-blur-sm" />
           <div className="relative bg-background border border-border shadow-elegant w-full max-w-md animate-fade-in" onClick={(e) => e.stopPropagation()}>
-
             {zelleStep === "instructions" && (
               <div className="p-8 space-y-5 text-center">
                 <button onClick={closeZelle} className="absolute top-4 right-4 text-stone-700 hover:text-amber"><X className="h-5 w-5" /></button>
@@ -763,7 +793,6 @@ const Index = () => {
                 </Button>
               </div>
             )}
-
             {zelleStep === "upload" && (
               <div className="p-8 space-y-5">
                 <button onClick={closeZelle} className="absolute top-4 right-4 text-stone-700 hover:text-amber"><X className="h-5 w-5" /></button>
@@ -800,7 +829,6 @@ const Index = () => {
                 </Button>
               </div>
             )}
-
             {zelleStep === "confirmed" && (
               <div className="p-8 space-y-4 text-center">
                 <CheckCircle className="h-14 w-14 mx-auto text-amber-deep" />
@@ -815,7 +843,7 @@ const Index = () => {
         </div>
       )}
 
-      {/* PAYPAL / CASH APP PAYMENT CONFIRM MODAL */}
+      {/* PAYPAL / CASH APP CONFIRM MODAL */}
       {paymentConfirmOpen && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-foreground/50 backdrop-blur-sm" />
@@ -837,12 +865,12 @@ const Index = () => {
               <div className="space-y-3 pt-2">
                 <Button onClick={handleExternalPaymentConfirmed} disabled={processing}
                   className="w-full rounded-none bg-foreground text-background hover:bg-amber-deep h-12 text-xs tracking-luxury uppercase">
-                  {processing ? "Confirming..." : "Payment Sent — Confirm My Order"}
+                  {processing ? "Confirming..." : "Payment Sent -- Confirm My Order"}
                 </Button>
                 <Button type="button" variant="outline"
                   onClick={() => {
                     setPaymentConfirmOpen(false);
-                    toast.message("No problem — return here once you have completed payment.");
+                    toast.message("No problem -- return here once you have completed payment.");
                   }}
                   className="w-full rounded-none h-12 text-xs tracking-luxury uppercase">
                   Not Yet
